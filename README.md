@@ -8,27 +8,27 @@ inspecting its GATT data.
 Build with the macOS Bluetooth privacy usage string embedded:
 
 ```sh
-make build
+mage build
 ```
 
 Scan nearby BLE advertisements:
 
 ```sh
-bin/sgtm scan --duration 20s
+mage scan
 ```
 
 Inspect a device by advertised name or CoreBluetooth UUID:
 
 ```sh
-bin/sgtm inspect --name decibel --notify 60s
-bin/sgtm inspect --addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX --notify 60s
-bin/sgtm inspect --addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX --notify 60s --write d5fc110d
+ARGS='--name decibel --notify 60s' mage inspect
+ARGS='--addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX --notify 60s' mage inspect
+ARGS='--addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX --notify 60s --write d5fc110d' mage inspect
 ```
 
 Run the full-screen booth dashboard:
 
 ```sh
-bin/sgtm dashboard --name "850019 EM" --listen :8080 --db .context/sgtm.sqlite
+mage dashboard
 ```
 
 On macOS, the first run may prompt for Bluetooth permission for the terminal or
@@ -60,3 +60,10 @@ The `dashboard` command serves a local browser display with:
 
 The default history window is 30 minutes. Adjust it with `--history`, for
 example `--history 2h`.
+
+Regenerate the typed SQLite package after changing `db/schema.sql` or
+`db/query.sql`:
+
+```sh
+mage sqlc
+```

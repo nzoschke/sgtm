@@ -4,6 +4,7 @@ go 1.26.4
 
 require (
 	github.com/JuulLabs-OSS/cbgo v0.0.1
+	github.com/magefile/mage v1.17.2
 	github.com/mattn/go-sqlite3 v1.14.49
 )
 
