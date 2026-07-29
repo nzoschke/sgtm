@@ -16,6 +16,8 @@ const (
 	plist  = "cmd/sgtm/Info.plist"
 )
 
+var Default = Build
+
 // Build compiles the macOS Bluetooth binary with privacy metadata embedded.
 func Build() error {
 	if err := os.MkdirAll("bin", 0o755); err != nil {
@@ -57,6 +59,12 @@ func Inspect() error {
 func Dashboard() error {
 	mg.Deps(Build)
 	return sh.RunV(binary, sgtmArgs("dashboard")...)
+}
+
+// Chrome builds and opens the browser-only Web Bluetooth dashboard.
+func Chrome() error {
+	mg.Deps(Build)
+	return sh.RunV(binary, sgtmArgs("chrome")...)
 }
 
 // Clean removes generated build output.

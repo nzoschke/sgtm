@@ -7,8 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -95,8 +97,20 @@ func dashboardCmd(args []string) error {
 	mux.HandleFunc("/", dashboardPage)
 	mux.HandleFunc("/events", store.events)
 	mux.HandleFunc("/api/state", store.state)
-	log.Printf("dashboard listening on http://localhost%s", displayListen(*listen))
-	return http.ListenAndServe(*listen, mux)
+	ln, err := net.Listen("tcp", *listen)
+	if err != nil {
+		return err
+	}
+	url := dashboardURL(ln.Addr().String())
+	log.Printf("dashboard listening on %s", url)
+	openDashboard(url)
+	go func() {
+		if err := http.Serve(ln, mux); err != nil && err != http.ErrServerClosed {
+			log.Printf("dashboard server: %v", err)
+		}
+	}()
+	runDashboardBLE(context.Background(), *addr, *name, *scanTimeout, store)
+	return nil
 }
 
 func newDashboardStore(cfg dashboardConfig, db *readingDB) *dashboardStore {
@@ -380,11 +394,21 @@ func (c *central) discoverDashboardCharacteristics(prph cbgo.Peripheral) (*cbgo.
 	return writable, nil
 }
 
-func displayListen(listen string) string {
-	if strings.HasPrefix(listen, ":") {
-		return listen
+func dashboardURL(addr string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "http://localhost:8080"
 	}
-	return "/" + listen
+	if host == "" || host == "::" || host == "0.0.0.0" || host == "[::]" {
+		host = "localhost"
+	}
+	return "http://" + net.JoinHostPort(host, port)
+}
+
+func openDashboard(url string) {
+	if err := exec.Command("open", url).Start(); err != nil {
+		log.Printf("open dashboard: %v", err)
+	}
 }
 
 func dashboardPage(w http.ResponseWriter, _ *http.Request) {

@@ -8,7 +8,13 @@ inspecting its GATT data.
 Build with the macOS Bluetooth privacy usage string embedded:
 
 ```sh
-mage build
+mage
+```
+
+Run the Chrome Web Bluetooth dashboard:
+
+```sh
+./bin/sgtm
 ```
 
 Scan nearby BLE advertisements:
@@ -25,14 +31,15 @@ ARGS='--addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX --notify 60s' mage inspect
 ARGS='--addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX --notify 60s --write d5fc110d' mage inspect
 ```
 
-Run the full-screen booth dashboard:
+Run the Chrome dashboard with custom flags:
 
 ```sh
-mage dashboard
+./bin/sgtm --listen :8090
 ```
 
-On macOS, the first run may prompt for Bluetooth permission for the terminal or
-host app that launches the command.
+Chrome will prompt for Bluetooth access when you click Connect. The native
+commands may prompt for Bluetooth permission for the terminal or host app that
+launches them.
 
 ## 850019 notes
 
@@ -50,7 +57,12 @@ start the live dBA/dBC stream.
 
 ## Dashboard
 
-The `dashboard` command serves a local browser display with:
+The default `sgtm` command serves a Chrome Web Bluetooth dashboard. Chrome
+connects directly to the meter, so click Connect in the page and select
+`850019 EM` from the Bluetooth picker.
+
+The Chrome dashboard stores recent history in IndexedDB. The native `dashboard`
+command serves a local browser display with Go handling Bluetooth and SQLite:
 
 - current dBA/dBC reading
 - rolling history chart

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -59,22 +60,30 @@ type readDescResult struct {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		usage()
-		os.Exit(2)
-	}
+	runtime.LockOSThread()
 
 	var err error
-	switch os.Args[1] {
-	case "scan":
-		err = scanCmd(os.Args[2:])
-	case "inspect":
-		err = inspectCmd(os.Args[2:])
-	case "dashboard":
-		err = dashboardCmd(os.Args[2:])
-	default:
-		usage()
-		os.Exit(2)
+	args := os.Args[1:]
+	if len(args) == 0 {
+		err = chromeCmd(nil)
+	} else {
+		switch args[0] {
+		case "chrome":
+			err = chromeCmd(args[1:])
+		case "scan":
+			err = scanCmd(args[1:])
+		case "inspect":
+			err = inspectCmd(args[1:])
+		case "dashboard":
+			err = dashboardCmd(args[1:])
+		default:
+			if strings.HasPrefix(args[0], "-") {
+				err = chromeCmd(args)
+				break
+			}
+			usage()
+			os.Exit(2)
+		}
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
@@ -84,11 +93,15 @@ func main() {
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage:
+  sgtm [chrome-dashboard flags]
+  sgtm chrome [--listen :8090]
   sgtm scan [--duration 15s] [--name text]
   sgtm inspect (--addr UUID | --name text) [--scan-timeout 20s] [--notify 30s] [--write hex[,hex...]]
   sgtm dashboard (--addr UUID | --name text) [--listen :8080]
 
 Examples:
+  bin/sgtm
+  bin/sgtm --listen :8091
   bin/sgtm scan --duration 20s
   bin/sgtm inspect --name decibel --notify 60s
   bin/sgtm inspect --addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
