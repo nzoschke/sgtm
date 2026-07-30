@@ -105,7 +105,6 @@ func dashboardCmd(args []string) error {
 	}
 	url := dashboardURL(ln.Addr().String())
 	log.Printf("dashboard listening on %s", url)
-	openDashboard(url)
 	go func() {
 		if err := http.Serve(ln, mux); err != nil && err != http.ErrServerClosed {
 			log.Printf("dashboard server: %v", err)
@@ -514,18 +513,18 @@ body {
 .band.unsafe { color: var(--red); }
 .side {
   padding: 22px;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 10px;
   min-height: 0;
   overflow: hidden;
 }
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 18px;
+  gap: 12px 18px;
   align-content: start;
   min-height: 0;
+}
+.stats > div {
+  min-width: 0;
 }
 .label {
   color: var(--muted);
@@ -543,15 +542,15 @@ body {
   overflow-wrap: anywhere;
 }
 .status {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--muted);
-  font-size: 1.5rem;
+  min-width: 0;
 }
 .dot {
   width: 14px;
   height: 14px;
+  flex: 0 0 auto;
   border-radius: 999px;
   background: var(--amber);
 }
@@ -624,8 +623,11 @@ canvas {
           <div class="label">Meter</div>
           <div class="metric small" id="meterState">--</div>
         </div>
+        <div>
+          <div class="label">Status</div>
+          <div class="metric small status"><span class="dot" id="dot"></span><span id="status">starting</span></div>
+        </div>
       </div>
-      <div class="status"><span class="dot" id="dot"></span><span id="status">starting</span></div>
     </aside>
   </section>
   <section class="chartShell">
