@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>CFBundleIdentifier</key>
+		<string>com.nzoschke.sgtm</string>
+		<key>CFBundleExecutable</key>
+		<string>sgtm</string>
+		<key>CFBundleName</key>
+		<string>sgtm</string>
+		<key>CFBundleDisplayName</key>
+		<string>SGTM</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>0.1.0</string>
+		<key>CFBundleVersion</key>
+		<string>1</string>
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>sgtm scans nearby Bluetooth Low Energy devices and reads data from the selected sound meter.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>sgtm scans nearby Bluetooth Low Energy devices and reads data from the selected sound meter.</string>
+</dict>
+</plist>

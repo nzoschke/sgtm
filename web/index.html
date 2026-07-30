@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sound Level Chrome</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="meter" aria-label="Sound level dashboard">
+      <div class="topbar">
+        <div>
+          <h1>Sound Level</h1>
+          <p id="status">Ready</p>
+        </div>
+        <div class="actions">
+          <button id="connect" type="button">Connect</button>
+          <button id="disconnect" type="button" disabled>Disconnect</button>
+          <button id="clear" type="button">Clear</button>
+        </div>
+      </div>
+
+      <section class="hero">
+        <div class="readout">
+          <div>
+            <div id="value" class="value">--.-</div>
+            <div id="unit" class="unit">dBA</div>
+          </div>
+          <div id="band" class="band">Waiting</div>
+        </div>
+
+        <aside class="side">
+          <div class="stats">
+            <div><span>Peak</span><strong id="peak">--.-</strong></div>
+            <div><span>Average</span><strong id="avg">--.-</strong></div>
+            <div><span>Samples</span><strong id="samples">0</strong></div>
+            <div><span>Device</span><strong id="device">Not connected</strong></div>
+            <div><span>Battery</span><strong id="battery">--</strong></div>
+            <div><span>Auto-off</span><strong id="autoOff">--</strong></div>
+            <div><span>Range</span><strong id="range">--</strong></div>
+            <div><span>Overload</span><strong id="overload">--</strong></div>
+            <div><span>Backlight</span><strong id="backlight">--</strong></div>
+          </div>
+          <div class="statusline"><span id="dot" class="dot"></span><span id="mode">Web Bluetooth</span></div>
+        </aside>
+      </section>
+
+      <section class="soundCheck" aria-label="Sound check zones">
+        <div class="zoneFields">
+          <label><span>Green max</span><input id="idealMaxInput" type="number" min="0" max="180" step="1" value="85"></label>
+          <label><span>Red from</span><input id="unsafeMinInput" type="number" min="0" max="180" step="1" value="95"></label>
+          <label><span>Chart min</span><input id="chartMinInput" type="number" min="0" max="180" step="1" value="35"></label>
+          <label><span>Chart max</span><input id="chartMaxInput" type="number" min="0" max="180" step="1" value="120"></label>
+        </div>
+        <div class="zoneActions">
+          <button id="saveConfig" type="button">Save</button>
+          <button id="resetConfig" type="button">Default</button>
+          <div id="configStatus">Sound check</div>
+        </div>
+      </section>
+
+      <section class="chartShell">
+        <canvas id="chart" aria-label="Sound history chart"></canvas>
+      </section>
+
+      <div class="bands">
+        <div><span class="swatch ideal"></span><span id="idealBandLabel">Ideal to 85 dB</span></div>
+        <div><span class="swatch watch"></span><span id="watchBandLabel">Watch 85-95 dB</span></div>
+        <div><span class="swatch unsafe"></span><span id="unsafeBandLabel">Too high 95+ dB</span></div>
+      </div>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
