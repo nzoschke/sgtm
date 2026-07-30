@@ -24,6 +24,7 @@ var Default = Build
 
 // Build compiles the macOS Bluetooth binary with privacy metadata embedded.
 func Build() error {
+	mg.Deps(Gsx)
 	if err := os.MkdirAll("bin", 0o755); err != nil {
 		return err
 	}
@@ -35,6 +36,7 @@ func Build() error {
 
 // App builds a signed macOS .app bundle for the native Go Bluetooth dashboard.
 func App() error {
+	mg.Deps(Gsx)
 	if err := os.RemoveAll(appBundle); err != nil {
 		return err
 	}
@@ -59,6 +61,11 @@ func App() error {
 		return err
 	}
 	return sh.RunV("codesign", "--force", "--deep", "--sign", "-", "--identifier", "com.nzoschke.sgtm", appBundle)
+}
+
+// Gsx regenerates type-safe HTML components from ui/*.gsx.
+func Gsx() error {
+	return sh.RunV("go", "run", "github.com/gsxhq/gsx/cmd/gsx", "generate", "./ui")
 }
 
 // OpenApp builds and opens the native macOS app bundle.

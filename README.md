@@ -94,3 +94,10 @@ Regenerate the typed SQLite package after changing `db/schema.sql` or
 ```sh
 mage sqlc
 ```
+
+The native dashboard HTML is built from reusable gsx components in `ui/`.
+Regenerate it after changing `ui/*.gsx`:
+
+```sh
+mage gsx
+```
