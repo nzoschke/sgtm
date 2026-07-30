@@ -10,6 +10,7 @@ const CHART_MIN = 35;
 const CHART_MAX = 120;
 const IDEAL_MAX = 85;
 const UNSAFE_MIN = 95;
+const SIGNAL_GAP_MS = 5000;
 
 const els = {
   connect: document.querySelector('#connect'),
@@ -204,22 +205,55 @@ function drawChart() {
     ctx.strokeStyle = '#f5f7f8';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    readings.forEach((reading, index) => {
+    let previous;
+    let moved = false;
+    readings.forEach((reading) => {
       const x = pad.left + ((reading.time - start) / HISTORY_MS) * plotW;
       const y = yFor(reading.display, pad, plotH);
-      if (index === 0) {
+      if (!moved || !previous || reading.time - previous.time > SIGNAL_GAP_MS) {
         ctx.moveTo(x, y);
+        moved = true;
       } else {
         ctx.lineTo(x, y);
       }
+      previous = reading;
     });
     ctx.stroke();
+    drawSignalGaps(ctx, pad, plotW, plotH, start);
   }
 
   ctx.fillStyle = '#9ca7af';
   ctx.font = '12px system-ui';
   ctx.fillText('30 min', pad.left, height - 8);
   ctx.fillText('now', width - pad.right - 26, height - 8);
+}
+
+function drawSignalGaps(ctx, pad, plotW, plotH, start) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(245, 247, 248, 0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  let drew = false;
+  for (let index = 1; index < readings.length; index += 1) {
+    const previous = readings[index - 1];
+    const current = readings[index];
+    if (current.time - previous.time <= SIGNAL_GAP_MS) {
+      continue;
+    }
+    const from = pad.left + ((previous.time + SIGNAL_GAP_MS - start) / HISTORY_MS) * plotW;
+    const to = pad.left + ((current.time - SIGNAL_GAP_MS - start) / HISTORY_MS) * plotW;
+    if (to <= from) {
+      continue;
+    }
+    const y = pad.top + plotH;
+    ctx.moveTo(Math.max(pad.left, from), y);
+    ctx.lineTo(Math.min(pad.left + plotW, to), y);
+    drew = true;
+  }
+  if (drew) {
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function fillBand(ctx, pad, plotW, plotH, low, high, color) {

@@ -148,6 +148,7 @@ canvas {
 
 const DashboardJS = `
 let cfg = {idealMax: 85, unsafeMin: 95, chartMin: 35, chartMax: 120, historySec: 1800};
+const signalGapMs = 5000;
 let readings = [];
 let sessionStarted = null;
 const el = id => document.getElementById(id);
@@ -255,7 +256,7 @@ function draw() {
   }
   const now = Date.now();
   const start = now - cfg.historySec * 1000;
-  const x = t => x0 + (Date.parse(t) - start) / (cfg.historySec * 1000) * cw;
+  const x = t => x0 + ((typeof t === 'number' ? t : Date.parse(t)) - start) / (cfg.historySec * 1000) * cw;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#99a4ad';
@@ -276,25 +277,55 @@ function draw() {
   ctx.strokeStyle = 'rgba(247,250,252,.95)';
   ctx.lineWidth = 3;
   ctx.beginPath();
+  let previous = null;
   let moved = false;
   for (const r of readings) {
     const xx = x(r.time);
     const yy = y(r.display);
     if (xx < x0 || xx > x0 + cw || !Number.isFinite(yy)) continue;
-    if (!moved) {
+    const currentTime = Date.parse(r.time);
+    const previousTime = previous ? Date.parse(previous.time) : NaN;
+    if (!moved || !Number.isFinite(previousTime) || currentTime - previousTime > signalGapMs) {
       ctx.moveTo(xx, yy);
       moved = true;
     } else {
       ctx.lineTo(xx, yy);
     }
+    previous = r;
   }
   if (moved) ctx.stroke();
+  drawSignalGaps(x, x0, y0 + ch, cw);
   ctx.strokeStyle = '#5b6670';
   ctx.strokeRect(x0, y0, cw, ch);
   ctx.fillStyle = '#f6f8fa';
   ctx.font = '16px system-ui';
   ctx.fillText('Ideal', x0 + 12, y(cfg.idealMax) + 26);
   ctx.fillText('Too High', x0 + 12, y0 + 26);
+}
+
+function drawSignalGaps(x, x0, y, cw) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(247,250,252,.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  let drew = false;
+  for (let i = 1; i < readings.length; i++) {
+    const previous = readings[i - 1];
+    const current = readings[i];
+    const previousTime = Date.parse(previous.time);
+    const currentTime = Date.parse(current.time);
+    if (!Number.isFinite(previousTime) || !Number.isFinite(currentTime) || currentTime - previousTime <= signalGapMs) {
+      continue;
+    }
+    const from = Math.max(x0, x(previousTime + signalGapMs));
+    const to = Math.min(x0 + cw, x(currentTime - signalGapMs));
+    if (to <= from) continue;
+    ctx.moveTo(from, y);
+    ctx.lineTo(to, y);
+    drew = true;
+  }
+  if (drew) ctx.stroke();
+  ctx.restore();
 }
 
 function formatTime(ms) {
