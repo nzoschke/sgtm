@@ -512,14 +512,14 @@ body {
 .band.watch { color: var(--amber); }
 .band.unsafe { color: var(--red); }
 .side {
-  padding: 22px;
+  padding: 18px 22px;
   min-height: 0;
   overflow: hidden;
 }
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 18px;
+  gap: 8px 18px;
   align-content: start;
   min-height: 0;
 }
@@ -528,18 +528,21 @@ body {
 }
 .label {
   color: var(--muted);
-  font-size: 1rem;
+  font-size: .9rem;
   text-transform: uppercase;
   letter-spacing: 0;
 }
 .metric {
-  font-size: 2.15rem;
+  font-size: 1.95rem;
   font-weight: 750;
   line-height: 1.05;
 }
 .metric.small {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   overflow-wrap: anywhere;
+}
+.statusTile {
+  grid-column: 1 / -1;
 }
 .status {
   display: flex;
@@ -623,7 +626,7 @@ canvas {
           <div class="label">Meter</div>
           <div class="metric small" id="meterState">--</div>
         </div>
-        <div>
+        <div class="statusTile">
           <div class="label">Status</div>
           <div class="metric small status"><span class="dot" id="dot"></span><span id="status">starting</span></div>
         </div>
@@ -716,7 +719,7 @@ function draw() {
   resizeCanvas();
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
-  const pad = {l: 58, r: 18, t: 18, b: 42};
+  const pad = {l: 58, r: 18, t: 18, b: 54};
   const x0 = pad.l, y0 = pad.t, cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#0b1014';
@@ -744,6 +747,21 @@ function draw() {
   const now = Date.now();
   const start = now - cfg.historySec * 1000;
   const x = t => x0 + (Date.parse(t) - start) / (cfg.historySec * 1000) * cw;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#99a4ad';
+  ctx.font = '13px system-ui';
+  for (let i = 0; i <= 4; i++) {
+    const tickTime = start + cfg.historySec * 1000 * (i / 4);
+    const xx = x0 + cw * (i / 4);
+    ctx.beginPath();
+    ctx.moveTo(xx, y0 + ch);
+    ctx.lineTo(xx, y0 + ch + 6);
+    ctx.stroke();
+    ctx.fillText(formatTime(tickTime), xx, y0 + ch + 10);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
   ctx.strokeStyle = 'rgba(247,250,252,.95)';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -766,6 +784,11 @@ function draw() {
   ctx.font = '16px system-ui';
   ctx.fillText('Ideal', x0 + 12, y(cfg.idealMax) + 26);
   ctx.fillText('Too High', x0 + 12, y0 + 26);
+}
+
+function formatTime(ms) {
+  const date = new Date(ms);
+  return date.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
 }
 
 window.addEventListener('resize', update);
