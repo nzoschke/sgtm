@@ -59,13 +59,14 @@ button:disabled {
 .meter {
   min-height: calc(100vh - clamp(24px, 4vw, 48px));
   display: grid;
-  grid-template-rows: auto minmax(260px, 42vh) minmax(240px, 1fr) auto;
+  grid-template-rows: auto minmax(260px, 38vh) auto minmax(240px, 1fr) auto;
   gap: clamp(12px, 1.6vw, 20px);
 }
 
 .topbar,
 .readout,
 .side,
+.soundCheck,
 .chartShell {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -214,6 +215,61 @@ h1 {
   background: var(--unsafe);
 }
 
+.soundCheck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 12px;
+}
+
+.zoneFields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.zoneFields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.zoneFields span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.zoneFields input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #090d11;
+  color: var(--text);
+  font: 700 1rem/1 system-ui;
+}
+
+.zoneActions {
+  display: grid;
+  grid-template-columns: auto auto minmax(96px, auto);
+  align-items: center;
+  gap: 8px;
+}
+
+.zoneActions button {
+  min-height: 38px;
+}
+
+#configStatus {
+  min-width: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .chartShell {
   display: grid;
   min-height: 0;
@@ -281,10 +337,23 @@ canvas {
   }
 
   .meter {
-    grid-template-rows: auto auto minmax(240px, 1fr) auto;
+    grid-template-rows: auto auto auto minmax(240px, 1fr) auto;
   }
 
   .stats {
     grid-template-columns: 1fr;
+  }
+
+  .soundCheck {
+    grid-template-columns: 1fr;
+  }
+
+  .zoneFields,
+  .zoneActions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #configStatus {
+    grid-column: 1 / -1;
   }
 }

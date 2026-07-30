@@ -4,6 +4,15 @@
 
 package db
 
+type DashboardConfig struct {
+	ID            int64   `json:"id"`
+	IdealMax      float64 `json:"ideal_max"`
+	UnsafeMin     float64 `json:"unsafe_min"`
+	ChartMin      float64 `json:"chart_min"`
+	ChartMax      float64 `json:"chart_max"`
+	UpdatedUnixMs int64   `json:"updated_unix_ms"`
+}
+
 type Reading struct {
 	ID           int64   `json:"id"`
 	TimeUnixMs   int64   `json:"time_unix_ms"`

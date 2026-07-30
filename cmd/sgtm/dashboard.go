@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -87,6 +88,16 @@ func dashboardCmd(args []string) error {
 		HistorySec: int(history.Seconds()),
 		DBPath:     *dbPath,
 	}
+	saved, ok, err := db.DashboardConfig(context.Background())
+	if err != nil {
+		return err
+	}
+	if ok {
+		applySavedDashboardConfig(&cfg, saved, fs)
+	}
+	if err := validateDashboardConfig(cfg); err != nil {
+		return err
+	}
 	store := newDashboardStore(cfg, db)
 	if err := store.loadRecent(context.Background(), *history, 5000); err != nil {
 		return err
@@ -96,6 +107,7 @@ func dashboardCmd(args []string) error {
 	mux.HandleFunc("/", dashboardPage)
 	mux.HandleFunc("/events", store.events)
 	mux.HandleFunc("/api/state", store.state)
+	mux.HandleFunc("/api/config", store.configAPI)
 	listenAddr := *listen
 	if runningInAppBundle() && listenAddr == ":8080" {
 		listenAddr = "127.0.0.1:0"
@@ -138,6 +150,58 @@ func defaultDashboardDBPath() string {
 		return "sgtm.sqlite"
 	}
 	return filepath.Join(dir, "SGTM", "sgtm.sqlite")
+}
+
+func applySavedDashboardConfig(cfg *dashboardConfig, saved dashboardConfig, fs *flag.FlagSet) {
+	if !flagWasSet(fs, "ideal-max") {
+		cfg.IdealMax = saved.IdealMax
+	}
+	if !flagWasSet(fs, "unsafe-min") {
+		cfg.UnsafeMin = saved.UnsafeMin
+	}
+	if !flagWasSet(fs, "chart-min") {
+		cfg.ChartMin = saved.ChartMin
+	}
+	if !flagWasSet(fs, "chart-max") {
+		cfg.ChartMax = saved.ChartMax
+	}
+}
+
+func flagWasSet(fs *flag.FlagSet, name string) bool {
+	seen := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			seen = true
+		}
+	})
+	return seen
+}
+
+func validateDashboardConfig(cfg dashboardConfig) error {
+	values := map[string]float64{
+		"idealMax":  cfg.IdealMax,
+		"unsafeMin": cfg.UnsafeMin,
+		"chartMin":  cfg.ChartMin,
+		"chartMax":  cfg.ChartMax,
+	}
+	for name, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return fmt.Errorf("%s must be finite", name)
+		}
+		if value < 0 || value > 180 {
+			return fmt.Errorf("%s must be between 0 and 180 dB", name)
+		}
+	}
+	if cfg.ChartMin >= cfg.IdealMax {
+		return fmt.Errorf("chartMin must be below idealMax")
+	}
+	if cfg.IdealMax >= cfg.UnsafeMin {
+		return fmt.Errorf("idealMax must be below unsafeMin")
+	}
+	if cfg.UnsafeMin >= cfg.ChartMax {
+		return fmt.Errorf("unsafeMin must be below chartMax")
+	}
+	return nil
 }
 
 func (s *dashboardStore) loadRecent(ctx context.Context, window time.Duration, limit int) error {
@@ -234,6 +298,58 @@ func (s *dashboardStore) snapshot() dashboardEvent {
 func (s *dashboardStore) state(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(s.snapshot())
+}
+
+func (s *dashboardStore) configAPI(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		cfg := s.snapshot().Config
+		_ = json.NewEncoder(w).Encode(cfg)
+	case http.MethodPost:
+		var next dashboardConfig
+		if err := json.NewDecoder(r.Body).Decode(&next); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		cfg, err := s.updateConfig(r.Context(), next)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(cfg)
+	default:
+		w.Header().Set("Allow", "GET, POST")
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *dashboardStore) updateConfig(ctx context.Context, next dashboardConfig) (dashboardConfig, error) {
+	s.mu.Lock()
+	cfg := s.config
+	s.mu.Unlock()
+
+	cfg.IdealMax = next.IdealMax
+	cfg.UnsafeMin = next.UnsafeMin
+	cfg.ChartMin = next.ChartMin
+	cfg.ChartMax = next.ChartMax
+	if err := validateDashboardConfig(cfg); err != nil {
+		return dashboardConfig{}, err
+	}
+
+	saveCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	if err := s.db.SaveDashboardConfig(saveCtx, cfg); err != nil {
+		return dashboardConfig{}, err
+	}
+
+	s.mu.Lock()
+	s.config = cfg
+	eventCfg := cfg
+	s.broadcastLocked(dashboardEvent{Type: "config", Config: &eventCfg})
+	s.mu.Unlock()
+	return cfg, nil
 }
 
 func (s *dashboardStore) events(w http.ResponseWriter, r *http.Request) {

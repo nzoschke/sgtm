@@ -85,6 +85,10 @@ and opens the dashboard in a browser. Both native forms use SQLite history:
 - red too-high band starting at `--unsafe-min` (default `95`)
 - SQLite history saved to `--db`
 
+Use the Sound Check controls in the dashboard to tune green/yellow/red zones and
+the chart range on site. The native app saves those settings to the SQLite
+database. The Chrome Web Bluetooth dashboard saves them in browser storage.
+
 The default history window is 30 minutes. Adjust it with `--history`, for
 example `--history 2h`.
 

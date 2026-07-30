@@ -15,3 +15,12 @@ CREATE TABLE IF NOT EXISTS readings (
 );
 
 CREATE INDEX IF NOT EXISTS readings_time_idx ON readings(time_unix_ms);
+
+CREATE TABLE IF NOT EXISTS dashboard_config (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  ideal_max REAL NOT NULL,
+  unsafe_min REAL NOT NULL,
+  chart_min REAL NOT NULL,
+  chart_max REAL NOT NULL,
+  updated_unix_ms INTEGER NOT NULL
+);

@@ -13,6 +13,7 @@ component DashboardPage() {
 		<body>
 			<main class="app">
 				<TopSection/>
+				<SoundCheckPanel/>
 				<ChartPanel/>
 			</main>
 			<script>@{gsx.RawJS(DashboardJS)}</script>
@@ -25,6 +26,29 @@ component TopSection() {
 		<ReadingPanel/>
 		<SidePanel/>
 	</section>
+}
+
+component SoundCheckPanel() {
+	<section class="soundCheck" aria-label="Sound check zones">
+		<div class="zoneFields">
+			<ZoneInput label="Green max" id="idealMaxInput" value="85"/>
+			<ZoneInput label="Red from" id="unsafeMinInput" value="95"/>
+			<ZoneInput label="Chart min" id="chartMinInput" value="35"/>
+			<ZoneInput label="Chart max" id="chartMaxInput" value="120"/>
+		</div>
+		<div class="zoneActions">
+			<button id="saveConfig" type="button">Save</button>
+			<button id="resetConfig" type="button">Default</button>
+			<div id="configStatus" class="configStatus">Sound check</div>
+		</div>
+	</section>
+}
+
+component ZoneInput(label string, id string, value string) {
+	<label class="zoneInput">
+		<span>{label}</span>
+		<input id={id} type="number" min="0" max="180" step="1" value={value}/>
+	</label>
 }
 
 component ReadingPanel() {

@@ -36,9 +36,11 @@ func DashboardPage() _gsxrt.Node {
 //line dashboard.gsx:15:5
 		_gsxgw.NodeResult(_gsxrenderTopSection(ctx, _gsxgw))
 //line dashboard.gsx:16:5
+		_gsxgw.NodeResult(_gsxrenderSoundCheckPanel(ctx, _gsxgw))
+//line dashboard.gsx:17:5
 		_gsxgw.NodeResult(_gsxrenderChartPanel(ctx, _gsxgw))
 		_gsxgw.S("</main>")
-//line dashboard.gsx:18:4
+//line dashboard.gsx:19:4
 		_gsxgw.S("<script")
 		_gsxgw.Nonce(ctx)
 		_gsxgw.S(">")
@@ -48,7 +50,7 @@ func DashboardPage() _gsxrt.Node {
 	})
 }
 
-//line dashboard.gsx:23:1
+//line dashboard.gsx:24:1
 func TopSection() _gsxrt.Node {
 	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
 		_gsxgw := _gsxrt.W(_gsxw)
@@ -60,17 +62,81 @@ func _gsxrenderTopSection(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer) error {
 	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
 		return _gsxerr
 	}
-//line dashboard.gsx:24:2
+//line dashboard.gsx:25:2
 	_gsxgw.S("<section class=\"top\">")
-//line dashboard.gsx:25:3
-	_gsxgw.NodeResult(_gsxrenderReadingPanel(ctx, _gsxgw))
 //line dashboard.gsx:26:3
+	_gsxgw.NodeResult(_gsxrenderReadingPanel(ctx, _gsxgw))
+//line dashboard.gsx:27:3
 	_gsxgw.NodeResult(_gsxrenderSidePanel(ctx, _gsxgw))
 	_gsxgw.S("</section>")
 	return _gsxgw.Err()
 }
 
-//line dashboard.gsx:30:1
+//line dashboard.gsx:31:1
+func SoundCheckPanel() _gsxrt.Node {
+	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
+		_gsxgw := _gsxrt.W(_gsxw)
+		return _gsxrenderSoundCheckPanel(ctx, _gsxgw)
+	})
+}
+
+func _gsxrenderSoundCheckPanel(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer) error {
+	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
+		return _gsxerr
+	}
+//line dashboard.gsx:32:2
+	_gsxgw.S("<section class=\"soundCheck\" aria-label=\"Sound check zones\">")
+//line dashboard.gsx:33:3
+	_gsxgw.S("<div class=\"zoneFields\">")
+//line dashboard.gsx:34:4
+	_gsxgw.NodeResult(_gsxrenderZoneInput(ctx, _gsxgw, "Green max", "idealMaxInput", "85"))
+//line dashboard.gsx:35:4
+	_gsxgw.NodeResult(_gsxrenderZoneInput(ctx, _gsxgw, "Red from", "unsafeMinInput", "95"))
+//line dashboard.gsx:36:4
+	_gsxgw.NodeResult(_gsxrenderZoneInput(ctx, _gsxgw, "Chart min", "chartMinInput", "35"))
+//line dashboard.gsx:37:4
+	_gsxgw.NodeResult(_gsxrenderZoneInput(ctx, _gsxgw, "Chart max", "chartMaxInput", "120"))
+	_gsxgw.S("</div>")
+//line dashboard.gsx:39:3
+	_gsxgw.S("<div class=\"zoneActions\">")
+//line dashboard.gsx:40:4
+	_gsxgw.S("<button id=\"saveConfig\" type=\"button\">Save</button>")
+//line dashboard.gsx:41:4
+	_gsxgw.S("<button id=\"resetConfig\" type=\"button\">Default</button>")
+//line dashboard.gsx:42:4
+	_gsxgw.S("<div id=\"configStatus\" class=\"configStatus\">Sound check</div></div></section>")
+	return _gsxgw.Err()
+}
+
+//line dashboard.gsx:47:1
+func ZoneInput(label string, id string, value string) _gsxrt.Node {
+	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
+		_gsxgw := _gsxrt.W(_gsxw)
+		return _gsxrenderZoneInput(ctx, _gsxgw, label, id, value)
+	})
+}
+
+func _gsxrenderZoneInput(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer, label string, id string, value string) error {
+	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
+		return _gsxerr
+	}
+//line dashboard.gsx:48:2
+	_gsxgw.S("<label class=\"zoneInput\">")
+//line dashboard.gsx:49:3
+	_gsxgw.S("<span>")
+//line dashboard.gsx:49:9
+	_gsxgw.Text(string(label))
+	_gsxgw.S("</span>")
+//line dashboard.gsx:50:3
+	_gsxgw.S("<input id=\"")
+	_gsxgw.AttrValue(string(id))
+	_gsxgw.S("\" type=\"number\" min=\"0\" max=\"180\" step=\"1\" value=\"")
+	_gsxgw.AttrValue(string(value))
+	_gsxgw.S("\"></label>")
+	return _gsxgw.Err()
+}
+
+//line dashboard.gsx:54:1
 func ReadingPanel() _gsxrt.Node {
 	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
 		_gsxgw := _gsxrt.W(_gsxw)
@@ -82,18 +148,18 @@ func _gsxrenderReadingPanel(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer) error {
 	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
 		return _gsxerr
 	}
-//line dashboard.gsx:31:2
+//line dashboard.gsx:55:2
 	_gsxgw.S("<div class=\"reading\">")
-//line dashboard.gsx:32:3
+//line dashboard.gsx:56:3
 	_gsxgw.S("<div class=\"value\" id=\"value\">--.-</div>")
-//line dashboard.gsx:33:3
+//line dashboard.gsx:57:3
 	_gsxgw.S("<div class=\"unit\" id=\"unit\">dBA</div>")
-//line dashboard.gsx:34:3
+//line dashboard.gsx:58:3
 	_gsxgw.S("<div class=\"band\" id=\"band\">Waiting</div></div>")
 	return _gsxgw.Err()
 }
 
-//line dashboard.gsx:38:1
+//line dashboard.gsx:62:1
 func SidePanel() _gsxrt.Node {
 	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
 		_gsxgw := _gsxrt.W(_gsxw)
@@ -105,33 +171,33 @@ func _gsxrenderSidePanel(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer) error {
 	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
 		return _gsxerr
 	}
-//line dashboard.gsx:39:2
+//line dashboard.gsx:63:2
 	_gsxgw.S("<aside class=\"side\">")
-//line dashboard.gsx:40:3
+//line dashboard.gsx:64:3
 	_gsxgw.S("<div class=\"stats\">")
-//line dashboard.gsx:41:4
+//line dashboard.gsx:65:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Peak", "peak", "--.-", false))
-//line dashboard.gsx:42:4
+//line dashboard.gsx:66:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Average", "avg", "--.-", false))
-//line dashboard.gsx:43:4
+//line dashboard.gsx:67:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Window", "window", "--", true))
-//line dashboard.gsx:44:4
+//line dashboard.gsx:68:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Session", "session", "--", true))
-//line dashboard.gsx:45:4
+//line dashboard.gsx:69:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Battery", "battery", "--", true))
-//line dashboard.gsx:46:4
+//line dashboard.gsx:70:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Auto-Off", "autoOff", "--", true))
-//line dashboard.gsx:47:4
+//line dashboard.gsx:71:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Range", "range", "--", true))
-//line dashboard.gsx:48:4
+//line dashboard.gsx:72:4
 	_gsxgw.NodeResult(_gsxrenderStatTile(ctx, _gsxgw, "Meter", "meterState", "--", true))
-//line dashboard.gsx:49:4
+//line dashboard.gsx:73:4
 	_gsxgw.NodeResult(_gsxrenderStatusTile(ctx, _gsxgw))
 	_gsxgw.S("</div></aside>")
 	return _gsxgw.Err()
 }
 
-//line dashboard.gsx:54:1
+//line dashboard.gsx:78:1
 func StatTile(label string, id string, value string, small bool) _gsxrt.Node {
 	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
 		_gsxgw := _gsxrt.W(_gsxw)
@@ -143,26 +209,26 @@ func _gsxrenderStatTile(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer, label string
 	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
 		return _gsxerr
 	}
-//line dashboard.gsx:55:2
+//line dashboard.gsx:79:2
 	_gsxgw.S("<div>")
-//line dashboard.gsx:56:3
+//line dashboard.gsx:80:3
 	_gsxgw.S("<div class=\"label\">")
-//line dashboard.gsx:56:22
+//line dashboard.gsx:80:22
 	_gsxgw.Text(string(label))
 	_gsxgw.S("</div>")
-//line dashboard.gsx:57:3
+//line dashboard.gsx:81:3
 	_gsxgw.S("<div id=\"")
 	_gsxgw.AttrValue(string(id))
 	_gsxgw.S("\" class=\"")
 	_gsxgw.Class(_gsxrt.DefaultClassMerge, _gsxrt.Class("metric"), _gsxrt.ClassIf("small", small))
 	_gsxgw.S("\">")
-//line dashboard.gsx:57:51
+//line dashboard.gsx:81:51
 	_gsxgw.Text(string(value))
 	_gsxgw.S("</div></div>")
 	return _gsxgw.Err()
 }
 
-//line dashboard.gsx:61:1
+//line dashboard.gsx:85:1
 func StatusTile() _gsxrt.Node {
 	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
 		_gsxgw := _gsxrt.W(_gsxw)
@@ -174,20 +240,20 @@ func _gsxrenderStatusTile(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer) error {
 	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
 		return _gsxerr
 	}
-//line dashboard.gsx:62:2
+//line dashboard.gsx:86:2
 	_gsxgw.S("<div class=\"statusTile\">")
-//line dashboard.gsx:63:3
+//line dashboard.gsx:87:3
 	_gsxgw.S("<div class=\"label\">Status</div>")
-//line dashboard.gsx:64:3
+//line dashboard.gsx:88:3
 	_gsxgw.S("<div class=\"metric small status\">")
-//line dashboard.gsx:65:4
+//line dashboard.gsx:89:4
 	_gsxgw.S("<span class=\"dot\" id=\"dot\"></span>")
-//line dashboard.gsx:66:4
+//line dashboard.gsx:90:4
 	_gsxgw.S("<span id=\"status\">starting</span></div></div>")
 	return _gsxgw.Err()
 }
 
-//line dashboard.gsx:71:1
+//line dashboard.gsx:95:1
 func ChartPanel() _gsxrt.Node {
 	return _gsxrt.Func(func(ctx _gsxctx.Context, _gsxw _gsxio.Writer) error {
 		_gsxgw := _gsxrt.W(_gsxw)
@@ -199,9 +265,9 @@ func _gsxrenderChartPanel(ctx _gsxctx.Context, _gsxgw *_gsxrt.Writer) error {
 	if _gsxerr := _gsxgw.Err(); _gsxerr != nil {
 		return _gsxerr
 	}
-//line dashboard.gsx:72:2
+//line dashboard.gsx:96:2
 	_gsxgw.S("<section class=\"chartShell\">")
-//line dashboard.gsx:73:3
+//line dashboard.gsx:97:3
 	_gsxgw.S("<canvas id=\"chart\"></canvas></section>")
 	return _gsxgw.Err()
 }

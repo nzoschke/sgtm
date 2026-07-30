@@ -4,18 +4,18 @@ const NOTIFY_UUID = '0000fff2-0000-1000-8000-00805f9b34fb';
 const START_COMMAND = Uint8Array.from([0xd5, 0xfc, 0x11, 0x0d]);
 const DB_NAME = 'sgtm-web';
 const STORE_NAME = 'readings';
+const CONFIG_KEY = 'sgtm-web-config';
 const HISTORY_MS = 30 * 60 * 1000;
 const MAX_POINTS = 5000;
-const CHART_MIN = 35;
-const CHART_MAX = 120;
-const IDEAL_MAX = 85;
-const UNSAFE_MIN = 95;
+const DEFAULT_CONFIG = { chartMin: 35, chartMax: 120, idealMax: 85, unsafeMin: 95 };
 const SIGNAL_GAP_MS = 5000;
 
 const els = {
   connect: document.querySelector('#connect'),
   disconnect: document.querySelector('#disconnect'),
   clear: document.querySelector('#clear'),
+  saveConfig: document.querySelector('#saveConfig'),
+  resetConfig: document.querySelector('#resetConfig'),
   status: document.querySelector('#status'),
   dot: document.querySelector('#dot'),
   band: document.querySelector('#band'),
@@ -31,6 +31,14 @@ const els = {
   autoOff: document.querySelector('#autoOff'),
   backlight: document.querySelector('#backlight'),
   chart: document.querySelector('#chart'),
+  idealMaxInput: document.querySelector('#idealMaxInput'),
+  unsafeMinInput: document.querySelector('#unsafeMinInput'),
+  chartMinInput: document.querySelector('#chartMinInput'),
+  chartMaxInput: document.querySelector('#chartMaxInput'),
+  configStatus: document.querySelector('#configStatus'),
+  idealBandLabel: document.querySelector('#idealBandLabel'),
+  watchBandLabel: document.querySelector('#watchBandLabel'),
+  unsafeBandLabel: document.querySelector('#unsafeBandLabel'),
 };
 
 let bluetoothDevice;
@@ -39,10 +47,16 @@ let notifyCharacteristic;
 let readings = [];
 let frameBuffer = [];
 let database;
+let cfg = loadConfig();
 
 els.connect.addEventListener('click', connect);
 els.disconnect.addEventListener('click', disconnect);
 els.clear.addEventListener('click', clearHistory);
+els.saveConfig.addEventListener('click', saveConfig);
+els.resetConfig.addEventListener('click', resetConfig);
+for (const input of [els.idealMaxInput, els.unsafeMinInput, els.chartMinInput, els.chartMaxInput]) {
+  input.addEventListener('input', previewConfig);
+}
 window.addEventListener('resize', drawChart);
 
 init();
@@ -53,11 +67,103 @@ async function init() {
     els.connect.disabled = true;
     return;
   }
+  applyConfigToInputs();
   database = await openDatabase();
   readings = await loadRecentReadings();
   pruneReadings();
   updateDisplay(readings.at(-1));
   drawChart();
+}
+
+function loadConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    const next = { ...DEFAULT_CONFIG, ...saved };
+    validateConfig(next);
+    return next;
+  } catch {
+    return { ...DEFAULT_CONFIG };
+  }
+}
+
+function saveConfig() {
+  try {
+    cfg = configFromInputs();
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+    applyConfigToInputs();
+    setConfigStatus('Saved');
+    updateDisplay(readings.at(-1));
+    drawChart();
+  } catch (error) {
+    setConfigStatus(error.message);
+  }
+}
+
+function resetConfig() {
+  cfg = { ...DEFAULT_CONFIG };
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  applyConfigToInputs();
+  setConfigStatus('Saved');
+  updateDisplay(readings.at(-1));
+  drawChart();
+}
+
+function previewConfig() {
+  try {
+    cfg = configFromInputs();
+    setConfigStatus('Unsaved');
+    updateDisplay(readings.at(-1));
+    drawChart();
+  } catch (error) {
+    setConfigStatus(error.message);
+  }
+}
+
+function configFromInputs() {
+  const next = {
+    chartMin: Number(els.chartMinInput.value),
+    chartMax: Number(els.chartMaxInput.value),
+    idealMax: Number(els.idealMaxInput.value),
+    unsafeMin: Number(els.unsafeMinInput.value),
+  };
+  validateConfig(next);
+  return next;
+}
+
+function validateConfig(next) {
+  for (const key of ['chartMin', 'chartMax', 'idealMax', 'unsafeMin']) {
+    if (!Number.isFinite(next[key]) || next[key] < 0 || next[key] > 180) {
+      throw new Error('Use 0-180 dB');
+    }
+  }
+  if (!(next.chartMin < next.idealMax && next.idealMax < next.unsafeMin && next.unsafeMin < next.chartMax)) {
+    throw new Error('Need min < green < red < max');
+  }
+}
+
+function applyConfigToInputs() {
+  els.chartMinInput.value = formatConfigNumber(cfg.chartMin);
+  els.chartMaxInput.value = formatConfigNumber(cfg.chartMax);
+  els.idealMaxInput.value = formatConfigNumber(cfg.idealMax);
+  els.unsafeMinInput.value = formatConfigNumber(cfg.unsafeMin);
+  updateBandLabels();
+}
+
+function formatConfigNumber(value) {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(1)));
+}
+
+function setConfigStatus(status) {
+  els.configStatus.textContent = status;
+}
+
+function updateBandLabels() {
+  els.idealBandLabel.textContent = `Ideal to ${formatConfigNumber(cfg.idealMax)} dB`;
+  els.watchBandLabel.textContent = `Watch ${formatConfigNumber(cfg.idealMax)}-${formatConfigNumber(cfg.unsafeMin)} dB`;
+  els.unsafeBandLabel.textContent = `Too high ${formatConfigNumber(cfg.unsafeMin)}+ dB`;
+  if (els.configStatus.textContent === 'Sound check') {
+    setConfigStatus(`Green <= ${formatConfigNumber(cfg.idealMax)} | Red >= ${formatConfigNumber(cfg.unsafeMin)}`);
+  }
 }
 
 async function connect() {
@@ -184,14 +290,15 @@ function drawChart() {
   const start = now - HISTORY_MS;
 
   ctx.clearRect(0, 0, width, height);
-  fillBand(ctx, pad, plotW, plotH, CHART_MIN, IDEAL_MAX, 'rgba(41, 184, 111, 0.18)');
-  fillBand(ctx, pad, plotW, plotH, IDEAL_MAX, UNSAFE_MIN, 'rgba(215, 161, 43, 0.16)');
-  fillBand(ctx, pad, plotW, plotH, UNSAFE_MIN, CHART_MAX, 'rgba(230, 75, 75, 0.18)');
+  fillBand(ctx, pad, plotW, plotH, cfg.chartMin, cfg.idealMax, 'rgba(41, 184, 111, 0.18)');
+  fillBand(ctx, pad, plotW, plotH, cfg.idealMax, cfg.unsafeMin, 'rgba(215, 161, 43, 0.16)');
+  fillBand(ctx, pad, plotW, plotH, cfg.unsafeMin, cfg.chartMax, 'rgba(230, 75, 75, 0.18)');
 
   ctx.strokeStyle = '#2a353e';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  for (let value = 40; value <= 120; value += 10) {
+  const yStep = plotH < 220 ? 20 : 10;
+  for (let value = Math.ceil(cfg.chartMin / yStep) * yStep; value <= cfg.chartMax; value += yStep) {
     const y = yFor(value, pad, plotH);
     ctx.moveTo(pad.left, y);
     ctx.lineTo(width - pad.right, y);
@@ -264,8 +371,8 @@ function fillBand(ctx, pad, plotW, plotH, low, high, color) {
 }
 
 function yFor(value, pad, plotH) {
-  const clamped = Math.max(CHART_MIN, Math.min(CHART_MAX, value));
-  return pad.top + ((CHART_MAX - clamped) / (CHART_MAX - CHART_MIN)) * plotH;
+  const clamped = Math.max(cfg.chartMin, Math.min(cfg.chartMax, value));
+  return pad.top + ((cfg.chartMax - clamped) / (cfg.chartMax - cfg.chartMin)) * plotH;
 }
 
 function pushFrame(chunk) {
@@ -366,10 +473,10 @@ function setBand(value) {
     els.band.className = 'band';
     return;
   }
-  if (value >= UNSAFE_MIN) {
+  if (value >= cfg.unsafeMin) {
     els.band.textContent = 'Too high';
     els.band.className = 'band unsafe';
-  } else if (value > IDEAL_MAX) {
+  } else if (value > cfg.idealMax) {
     els.band.textContent = 'Watch';
     els.band.className = 'band watch';
   } else {

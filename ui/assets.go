@@ -24,7 +24,7 @@ body {
 .app {
   height: 100vh;
   display: grid;
-  grid-template-rows: minmax(250px, 34vh) minmax(0, 1fr);
+  grid-template-rows: minmax(250px, 32vh) auto minmax(0, 1fr);
   gap: 14px;
   padding: 18px;
   overflow: hidden;
@@ -36,7 +36,7 @@ body {
   align-items: stretch;
   min-height: 0;
 }
-.reading, .side, .chartShell {
+.reading, .side, .soundCheck, .chartShell {
   background: var(--panel);
   border: 1px solid #26313a;
   border-radius: 8px;
@@ -120,6 +120,67 @@ body {
 }
 .dot.live { background: var(--green); }
 .dot.retrying { background: var(--red); }
+.soundCheck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 10px 12px;
+  min-height: 0;
+}
+.zoneFields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(92px, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+.zoneInput {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.zoneInput span {
+  color: var(--muted);
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.zoneInput input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  border: 1px solid #26313a;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #0b1014;
+  color: var(--text);
+  font: 700 1.05rem/1 system-ui;
+}
+.zoneActions {
+  display: grid;
+  grid-template-columns: auto auto minmax(86px, auto);
+  gap: 8px;
+  align-items: center;
+}
+.zoneActions button {
+  height: 36px;
+  border: 1px solid #26313a;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #151d24;
+  color: var(--text);
+  font: 700 .95rem/1 system-ui;
+}
+.zoneActions button:first-child {
+  background: #58a6ff;
+  border-color: #58a6ff;
+  color: #04101f;
+}
+.configStatus {
+  color: var(--muted);
+  font-size: .85rem;
+  overflow-wrap: anywhere;
+}
 .chartShell {
   min-height: 0;
   padding: 12px;
@@ -134,20 +195,28 @@ canvas {
 }
 @media (max-width: 800px) {
   .app { padding: 16px; }
-  .app { grid-template-rows: minmax(420px, 55vh) minmax(0, 1fr); }
+  .app { grid-template-rows: minmax(360px, 44vh) auto minmax(0, 1fr); }
   .top { grid-template-columns: 1fr; }
   .reading { padding: 20px 24px; }
+  .side { padding: 12px 18px; }
+  .stats { gap: 4px 14px; }
+  .label { font-size: .68rem; }
   .value { font-size: 5.25rem; }
   .unit { font-size: 2rem; }
   .band { font-size: 1.65rem; }
-  .metric { font-size: 1.45rem; }
-  .metric.small { font-size: 1rem; }
+  .metric { font-size: 1.25rem; }
+  .metric.small { font-size: .9rem; }
   .unit { padding-bottom: 0; }
+  .soundCheck { grid-template-columns: 1fr; align-items: stretch; }
+  .zoneFields { grid-template-columns: 1fr 1fr; }
+  .zoneActions { grid-template-columns: 1fr 1fr; }
+  .configStatus { grid-column: 1 / -1; }
 }
 `
 
 const DashboardJS = `
-let cfg = {idealMax: 85, unsafeMin: 95, chartMin: 35, chartMax: 120, historySec: 1800};
+const defaultCfg = {idealMax: 85, unsafeMin: 95, chartMin: 35, chartMax: 120, historySec: 1800};
+let cfg = {...defaultCfg};
 const signalGapMs = 5000;
 let readings = [];
 let sessionStarted = null;
@@ -156,7 +225,10 @@ const canvas = el('chart');
 const ctx = canvas.getContext('2d');
 
 function setState(state) {
-  if (state.config) cfg = state.config;
+  if (state.config) {
+    cfg = {...cfg, ...state.config};
+    applyConfigToInputs();
+  }
   if (state.history) {
     readings = state.history;
   } else if (state.reading) {
@@ -165,6 +237,84 @@ function setState(state) {
   if (state.session) sessionStarted = Date.parse(state.session);
   if (state.status) setStatus(state.status);
   update();
+}
+
+function applyConfigToInputs() {
+  el('idealMaxInput').value = formatInput(cfg.idealMax);
+  el('unsafeMinInput').value = formatInput(cfg.unsafeMin);
+  el('chartMinInput').value = formatInput(cfg.chartMin);
+  el('chartMaxInput').value = formatInput(cfg.chartMax);
+  updateZoneLegend();
+}
+
+function formatInput(value) {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(1)));
+}
+
+function configFromInputs() {
+  const next = {
+    ...cfg,
+    idealMax: Number(el('idealMaxInput').value),
+    unsafeMin: Number(el('unsafeMinInput').value),
+    chartMin: Number(el('chartMinInput').value),
+    chartMax: Number(el('chartMaxInput').value),
+  };
+  validateConfig(next);
+  return next;
+}
+
+function validateConfig(next) {
+  for (const key of ['idealMax', 'unsafeMin', 'chartMin', 'chartMax']) {
+    if (!Number.isFinite(next[key]) || next[key] < 0 || next[key] > 180) {
+      throw new Error('Use 0-180 dB');
+    }
+  }
+  if (!(next.chartMin < next.idealMax && next.idealMax < next.unsafeMin && next.unsafeMin < next.chartMax)) {
+    throw new Error('Need min < green < red < max');
+  }
+}
+
+function previewConfig() {
+  try {
+    cfg = configFromInputs();
+    setConfigStatus('Unsaved');
+    update();
+  } catch (error) {
+    setConfigStatus(error.message);
+  }
+}
+
+async function saveConfig(next = null) {
+  try {
+    cfg = next || configFromInputs();
+    const response = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(cfg),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    cfg = {...cfg, ...(await response.json())};
+    applyConfigToInputs();
+    setConfigStatus('Saved');
+    update();
+  } catch (error) {
+    setConfigStatus(String(error.message || error).trim());
+  }
+}
+
+function resetConfig() {
+  const next = {...cfg, ...defaultCfg};
+  cfg = next;
+  applyConfigToInputs();
+  saveConfig(next);
+}
+
+function setConfigStatus(status) {
+  el('configStatus').textContent = status;
+}
+
+function updateZoneLegend() {
+  el('configStatus').textContent = 'Green <= ' + formatInput(cfg.idealMax) + ' | Red >= ' + formatInput(cfg.unsafeMin);
 }
 
 function addReading(reading) {
@@ -246,7 +396,8 @@ function draw() {
   ctx.lineWidth = 1;
   ctx.fillStyle = '#99a4ad';
   ctx.font = '14px system-ui';
-  for (let v = Math.ceil(min / 10) * 10; v <= max; v += 10) {
+  const yStep = ch < 220 ? 20 : 10;
+  for (let v = Math.ceil(min / yStep) * yStep; v <= max; v += yStep) {
     const yy = y(v);
     ctx.beginPath();
     ctx.moveTo(x0, yy);
@@ -334,6 +485,12 @@ function formatTime(ms) {
 }
 
 window.addEventListener('resize', update);
+for (const id of ['idealMaxInput', 'unsafeMinInput', 'chartMinInput', 'chartMaxInput']) {
+  el(id).addEventListener('input', previewConfig);
+}
+el('saveConfig').addEventListener('click', () => saveConfig());
+el('resetConfig').addEventListener('click', resetConfig);
+applyConfigToInputs();
 fetch('/api/state').then(r => r.json()).then(setState);
 const events = new EventSource('/events');
 events.onmessage = ev => setState(JSON.parse(ev.data));

@@ -95,6 +95,38 @@ func (r *readingDB) Recent(ctx context.Context, since time.Time, limit int) ([]s
 	return reversed, nil
 }
 
+func (r *readingDB) DashboardConfig(ctx context.Context) (dashboardConfig, bool, error) {
+	if r == nil {
+		return dashboardConfig{}, false, nil
+	}
+	row, err := r.queries.GetDashboardConfig(ctx)
+	if err == sql.ErrNoRows {
+		return dashboardConfig{}, false, nil
+	}
+	if err != nil {
+		return dashboardConfig{}, false, err
+	}
+	return dashboardConfig{
+		IdealMax:  row.IdealMax,
+		UnsafeMin: row.UnsafeMin,
+		ChartMin:  row.ChartMin,
+		ChartMax:  row.ChartMax,
+	}, true, nil
+}
+
+func (r *readingDB) SaveDashboardConfig(ctx context.Context, cfg dashboardConfig) error {
+	if r == nil {
+		return nil
+	}
+	return r.queries.UpsertDashboardConfig(ctx, meterdb.UpsertDashboardConfigParams{
+		IdealMax:      cfg.IdealMax,
+		UnsafeMin:     cfg.UnsafeMin,
+		ChartMin:      cfg.ChartMin,
+		ChartMax:      cfg.ChartMax,
+		UpdatedUnixMs: time.Now().UnixNano() / int64(time.Millisecond),
+	})
+}
+
 func boolInt(v bool) int64 {
 	if v {
 		return 1

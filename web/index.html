@@ -46,14 +46,28 @@
         </aside>
       </section>
 
+      <section class="soundCheck" aria-label="Sound check zones">
+        <div class="zoneFields">
+          <label><span>Green max</span><input id="idealMaxInput" type="number" min="0" max="180" step="1" value="85"></label>
+          <label><span>Red from</span><input id="unsafeMinInput" type="number" min="0" max="180" step="1" value="95"></label>
+          <label><span>Chart min</span><input id="chartMinInput" type="number" min="0" max="180" step="1" value="35"></label>
+          <label><span>Chart max</span><input id="chartMaxInput" type="number" min="0" max="180" step="1" value="120"></label>
+        </div>
+        <div class="zoneActions">
+          <button id="saveConfig" type="button">Save</button>
+          <button id="resetConfig" type="button">Default</button>
+          <div id="configStatus">Sound check</div>
+        </div>
+      </section>
+
       <section class="chartShell">
         <canvas id="chart" aria-label="Sound history chart"></canvas>
       </section>
 
       <div class="bands">
-        <div><span class="swatch ideal"></span>Ideal to 85 dB</div>
-        <div><span class="swatch watch"></span>Watch 85-95 dB</div>
-        <div><span class="swatch unsafe"></span>Too high 95+ dB</div>
+        <div><span class="swatch ideal"></span><span id="idealBandLabel">Ideal to 85 dB</span></div>
+        <div><span class="swatch watch"></span><span id="watchBandLabel">Watch 85-95 dB</span></div>
+        <div><span class="swatch unsafe"></span><span id="unsafeBandLabel">Too high 95+ dB</span></div>
       </div>
     </section>
   </main>

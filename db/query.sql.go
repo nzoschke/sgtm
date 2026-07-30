@@ -9,6 +9,31 @@ import (
 	"context"
 )
 
+const getDashboardConfig = `-- name: GetDashboardConfig :one
+SELECT ideal_max, unsafe_min, chart_min, chart_max
+FROM dashboard_config
+WHERE id = 1
+`
+
+type GetDashboardConfigRow struct {
+	IdealMax  float64 `json:"ideal_max"`
+	UnsafeMin float64 `json:"unsafe_min"`
+	ChartMin  float64 `json:"chart_min"`
+	ChartMax  float64 `json:"chart_max"`
+}
+
+func (q *Queries) GetDashboardConfig(ctx context.Context) (GetDashboardConfigRow, error) {
+	row := q.db.QueryRowContext(ctx, getDashboardConfig)
+	var i GetDashboardConfigRow
+	err := row.Scan(
+		&i.IdealMax,
+		&i.UnsafeMin,
+		&i.ChartMin,
+		&i.ChartMax,
+	)
+	return i, err
+}
+
 const insertReading = `-- name: InsertReading :exec
 INSERT INTO readings (
   time_unix_ms, value, display, unit, range_low, range_high, overload, max_min,
@@ -112,4 +137,35 @@ func (q *Queries) ListRecentReadings(ctx context.Context, arg ListRecentReadings
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertDashboardConfig = `-- name: UpsertDashboardConfig :exec
+INSERT INTO dashboard_config (
+  id, ideal_max, unsafe_min, chart_min, chart_max, updated_unix_ms
+) VALUES (1, ?, ?, ?, ?, ?)
+ON CONFLICT(id) DO UPDATE SET
+  ideal_max = excluded.ideal_max,
+  unsafe_min = excluded.unsafe_min,
+  chart_min = excluded.chart_min,
+  chart_max = excluded.chart_max,
+  updated_unix_ms = excluded.updated_unix_ms
+`
+
+type UpsertDashboardConfigParams struct {
+	IdealMax      float64 `json:"ideal_max"`
+	UnsafeMin     float64 `json:"unsafe_min"`
+	ChartMin      float64 `json:"chart_min"`
+	ChartMax      float64 `json:"chart_max"`
+	UpdatedUnixMs int64   `json:"updated_unix_ms"`
+}
+
+func (q *Queries) UpsertDashboardConfig(ctx context.Context, arg UpsertDashboardConfigParams) error {
+	_, err := q.db.ExecContext(ctx, upsertDashboardConfig,
+		arg.IdealMax,
+		arg.UnsafeMin,
+		arg.ChartMin,
+		arg.ChartMax,
+		arg.UpdatedUnixMs,
+	)
+	return err
 }
