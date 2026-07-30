@@ -16,6 +16,8 @@ const els = {
   disconnect: document.querySelector('#disconnect'),
   clear: document.querySelector('#clear'),
   status: document.querySelector('#status'),
+  dot: document.querySelector('#dot'),
+  band: document.querySelector('#band'),
   value: document.querySelector('#value'),
   unit: document.querySelector('#unit'),
   avg: document.querySelector('#avg'),
@@ -146,6 +148,7 @@ function updateDisplay(reading) {
     els.battery.textContent = '--';
     els.autoOff.textContent = '--';
     els.backlight.textContent = '--';
+    setBand();
     return;
   }
   els.value.textContent = reading.display.toFixed(1);
@@ -155,6 +158,7 @@ function updateDisplay(reading) {
   els.battery.textContent = reading.lowPower ? 'Low' : 'OK';
   els.autoOff.textContent = reading.autoPowerOff ? 'Enabled' : 'Disabled';
   els.backlight.textContent = reading.backlight ? 'On' : 'Off';
+  setBand(reading.display);
 
   const values = readings.map((item) => item.display);
   const sum = values.reduce((total, value) => total + value, 0);
@@ -318,6 +322,26 @@ function u16be(bytes, offset) {
 
 function setStatus(message) {
   els.status.textContent = message;
+  const status = message.toLowerCase();
+  els.dot.className = status === 'live' ? 'dot live' : status.includes('disconnect') || status.includes('error') ? 'dot error' : 'dot';
+}
+
+function setBand(value) {
+  if (value === undefined) {
+    els.band.textContent = 'Waiting';
+    els.band.className = 'band';
+    return;
+  }
+  if (value >= UNSAFE_MIN) {
+    els.band.textContent = 'Too high';
+    els.band.className = 'band unsafe';
+  } else if (value > IDEAL_MAX) {
+    els.band.textContent = 'Watch';
+    els.band.className = 'band watch';
+  } else {
+    els.band.textContent = 'Ideal';
+    els.band.className = 'band ideal';
+  }
 }
 
 function openDatabase() {

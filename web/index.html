@@ -21,33 +21,39 @@
         </div>
       </div>
 
-      <div class="readout">
-        <div>
-          <div id="value" class="value">--.-</div>
-          <div id="unit" class="unit">dBA</div>
+      <section class="hero">
+        <div class="readout">
+          <div>
+            <div id="value" class="value">--.-</div>
+            <div id="unit" class="unit">dBA</div>
+          </div>
+          <div id="band" class="band">Waiting</div>
         </div>
-        <div class="stats">
-          <div><span>Average</span><strong id="avg">--.-</strong></div>
-          <div><span>Peak</span><strong id="peak">--.-</strong></div>
-          <div><span>Samples</span><strong id="samples">0</strong></div>
-        </div>
-      </div>
 
-      <canvas id="chart" aria-label="Sound history chart"></canvas>
+        <aside class="side">
+          <div class="stats">
+            <div><span>Peak</span><strong id="peak">--.-</strong></div>
+            <div><span>Average</span><strong id="avg">--.-</strong></div>
+            <div><span>Samples</span><strong id="samples">0</strong></div>
+            <div><span>Device</span><strong id="device">Not connected</strong></div>
+            <div><span>Battery</span><strong id="battery">--</strong></div>
+            <div><span>Auto-off</span><strong id="autoOff">--</strong></div>
+            <div><span>Range</span><strong id="range">--</strong></div>
+            <div><span>Overload</span><strong id="overload">--</strong></div>
+            <div><span>Backlight</span><strong id="backlight">--</strong></div>
+          </div>
+          <div class="statusline"><span id="dot" class="dot"></span><span id="mode">Web Bluetooth</span></div>
+        </aside>
+      </section>
+
+      <section class="chartShell">
+        <canvas id="chart" aria-label="Sound history chart"></canvas>
+      </section>
 
       <div class="bands">
         <div><span class="swatch ideal"></span>Ideal to 85 dB</div>
         <div><span class="swatch watch"></span>Watch 85-95 dB</div>
         <div><span class="swatch unsafe"></span>Too high 95+ dB</div>
-      </div>
-
-      <div class="details">
-        <div><span>Device</span><strong id="device">Not connected</strong></div>
-        <div><span>Range</span><strong id="range">--</strong></div>
-        <div><span>Overload</span><strong id="overload">--</strong></div>
-        <div><span>Battery</span><strong id="battery">--</strong></div>
-        <div><span>Auto-off</span><strong id="autoOff">--</strong></div>
-        <div><span>Backlight</span><strong id="backlight">--</strong></div>
       </div>
     </section>
   </main>

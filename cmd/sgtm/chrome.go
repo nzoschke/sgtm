@@ -32,7 +32,11 @@ func chromeCmd(args []string) error {
 func webRoot() (string, error) {
 	candidates := []string{"web"}
 	if exe, err := os.Executable(); err == nil {
-		candidates = append(candidates, filepath.Join(filepath.Dir(exe), "..", "web"))
+		exeDir := filepath.Dir(exe)
+		candidates = append(candidates,
+			filepath.Join(exeDir, "..", "web"),
+			filepath.Join(exeDir, "..", "Resources", "web"),
+		)
 	}
 	for _, candidate := range candidates {
 		info, err := os.Stat(filepath.Join(candidate, "index.html"))

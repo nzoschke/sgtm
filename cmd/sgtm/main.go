@@ -65,20 +65,30 @@ func main() {
 	var err error
 	args := os.Args[1:]
 	if len(args) == 0 {
-		err = chromeCmd(nil)
+		if runningInAppBundle() {
+			err = dashboardCmd(nil)
+		} else {
+			err = chromeCmd(nil)
+		}
 	} else {
 		switch args[0] {
-		case "chrome":
+		case "web", "chrome":
 			err = chromeCmd(args[1:])
 		case "scan":
 			err = scanCmd(args[1:])
 		case "inspect":
 			err = inspectCmd(args[1:])
+		case "native":
+			err = nativeCmd(args[1:])
 		case "dashboard":
 			err = dashboardCmd(args[1:])
 		default:
 			if strings.HasPrefix(args[0], "-") {
-				err = chromeCmd(args)
+				if runningInAppBundle() {
+					err = dashboardCmd(args)
+				} else {
+					err = chromeCmd(args)
+				}
 				break
 			}
 			usage()
@@ -93,19 +103,19 @@ func main() {
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage:
-  sgtm [chrome-dashboard flags]
-  sgtm chrome [--listen :8090]
+  sgtm [web-dashboard flags]
+  sgtm web [--listen :8090]
+  sgtm native (--addr UUID | --name text) [--listen :8080]
   sgtm scan [--duration 15s] [--name text]
   sgtm inspect (--addr UUID | --name text) [--scan-timeout 20s] [--notify 30s] [--write hex[,hex...]]
-  sgtm dashboard (--addr UUID | --name text) [--listen :8080]
 
 Examples:
   bin/sgtm
   bin/sgtm --listen :8091
+  bin/sgtm native --name "850019 EM" --listen :8080
   bin/sgtm scan --duration 20s
   bin/sgtm inspect --name decibel --notify 60s
   bin/sgtm inspect --addr XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-  bin/sgtm dashboard --name "850019 EM" --listen :8080
 
 `)
 }

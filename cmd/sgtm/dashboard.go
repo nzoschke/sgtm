@@ -55,7 +55,7 @@ func dashboardCmd(args []string) error {
 	addr := fs.String("addr", "", "CoreBluetooth device UUID from scan output")
 	name := fs.String("name", "850019 EM", "case-insensitive local-name substring to discover and connect")
 	listen := fs.String("listen", ":8080", "HTTP listen address")
-	dbPath := fs.String("db", ".context/sgtm.sqlite", "SQLite history database path")
+	dbPath := fs.String("db", defaultDashboardDBPath(), "SQLite history database path")
 	scanTimeout := fs.Duration("scan-timeout", 20*time.Second, "time to scan when resolving a name or address")
 	idealMax := fs.Float64("ideal-max", 85, "top of green band, in dBA")
 	unsafeMin := fs.Float64("unsafe-min", 95, "start of red band, in dBA")
@@ -120,6 +120,17 @@ func newDashboardStore(cfg dashboardConfig, db *readingDB) *dashboardStore {
 		status:      "starting",
 		subscribers: make(map[chan dashboardEvent]struct{}),
 	}
+}
+
+func defaultDashboardDBPath() string {
+	if !runningInAppBundle() {
+		return ".context/sgtm.sqlite"
+	}
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "sgtm.sqlite"
+	}
+	return filepath.Join(dir, "SGTM", "sgtm.sqlite")
 }
 
 func (s *dashboardStore) loadRecent(ctx context.Context, window time.Duration, limit int) error {
