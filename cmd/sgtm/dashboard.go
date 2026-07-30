@@ -91,13 +91,15 @@ func dashboardCmd(args []string) error {
 		return err
 	}
 
-	go runDashboardBLE(context.Background(), *addr, *name, *scanTimeout, store)
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", dashboardPage)
 	mux.HandleFunc("/events", store.events)
 	mux.HandleFunc("/api/state", store.state)
-	ln, err := net.Listen("tcp", *listen)
+	listenAddr := *listen
+	if runningInAppBundle() && listenAddr == ":8080" {
+		listenAddr = "127.0.0.1:0"
+	}
+	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return err
 	}
@@ -109,6 +111,11 @@ func dashboardCmd(args []string) error {
 			log.Printf("dashboard server: %v", err)
 		}
 	}()
+	if runningInAppBundle() {
+		go runDashboardBLE(context.Background(), *addr, *name, *scanTimeout, store)
+		return runDashboardWebView(url)
+	}
+	openDashboard(url)
 	runDashboardBLE(context.Background(), *addr, *name, *scanTimeout, store)
 	return nil
 }

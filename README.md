@@ -75,9 +75,9 @@ connects directly to the meter, so click Connect in the page and select
 `850019 EM` from the Bluetooth picker.
 
 The Chrome dashboard stores recent history in IndexedDB. The native `.app`
-bundle runs the Go/CoreBluetooth reader directly; the native CLI command
-launches the same reader in Terminal.app. Both native forms serve a local
-browser display with SQLite history:
+bundle runs the Go/CoreBluetooth reader directly and displays the dashboard in
+a WebKit window. The native CLI command launches the same reader in Terminal.app
+and opens the dashboard in a browser. Both native forms use SQLite history:
 
 - current dBA/dBC reading
 - rolling history chart
